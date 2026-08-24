@@ -49,6 +49,26 @@ class SwarmSam2BBoxFromJson:
         return ([[float(coords[0]), float(coords[1]), float(coords[2]), float(coords[3])]],)
 
 
+class SwarmSam2ModelLoaderOutput:
+    """Forces a connected SAM2 model loader to execute without running segmentation."""
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "sam2_model": ("SAM2MODEL",),
+            }
+        }
+
+    RETURN_TYPES = ()
+    FUNCTION = "load"
+    OUTPUT_NODE = True
+    CATEGORY = "SAM2"
+
+    def load(self, sam2_model):
+        return {}
+
+
 class SwarmSam2MaskPostProcess:
     """Post-processes a SAM2 segmentation mask with hole-filling."""
 
@@ -82,5 +102,6 @@ class SwarmSam2MaskPostProcess:
 
 NODE_CLASS_MAPPINGS = {
     "SwarmSam2BBoxFromJson": SwarmSam2BBoxFromJson,
+    "SwarmSam2ModelLoaderOutput": SwarmSam2ModelLoaderOutput,
     "SwarmSam2MaskPostProcess": SwarmSam2MaskPostProcess,
 }

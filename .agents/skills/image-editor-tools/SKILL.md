@@ -20,7 +20,7 @@ Guide to the image editor tool system in `src/wwwroot/js/genpage/helpers/image_e
 - `ImageEditorTool` - Base class. Creates `this.div` (toolbar button) and `this.configDiv` (bottom bar config area) via `makeDivs()`. Has lifecycle methods: `setActive()`, `setInactive()`, `draw()`, mouse handlers, `onLayerChanged()`.
 - `ImageEditorTempTool` - Extends base. Overrides `makeDivs()` with a no-op, so `this.div` is **undefined**. Used for hidden sub-tools (e.g., the eyedropper color picker tool). Any code accessing `.div` on a tool must null-check for this case.
 - `ImageEditorToolWithColor` - Extends base. Adds color control support: `getColorControlsHTML()`, `wireColorControls()`, `setColor(col)`, and color-aware `onLayerChanged()` with dual mask/image color memory. Tools that need a color picker (Brush, Bucket, Shape) extend this.
-- `ImageEditorToolSam2Base` - Extends base. Shared SAM2 warmup/clear-mask/request-tracking logic. Subclasses override `addWarmupGenData(genData, cx, cy)` and optionally `onClearMask()`. SAM2Points and SAM2BBox extend this.
+- `ImageEditorToolSam2Base` - Extends base. Shared SAM2 load-only warmup, clear-mask, and request-tracking logic. Its warmup sends the internal `sampreload` parameter and completes when the image-free websocket request closes. Subclasses may override `onClearMask()`. SAM2Points and SAM2BBox extend this.
 - Concrete tools extend the appropriate base: `ImageEditorToolBrush`/`ImageEditorToolBucket`/`ImageEditorToolShape` extend `ImageEditorToolWithColor`; `ImageEditorToolSam2Points`/`ImageEditorToolSam2BBox` extend `ImageEditorToolSam2Base`; others extend `ImageEditorTool`.
 
 ### Tool Registration
@@ -47,6 +47,10 @@ Tools that use color extend `ImageEditorToolWithColor`, which provides:
 ### Bottom Bar Config
 
 Each tool's config UI is in `this.configDiv`, a flex row at the bottom of the editor. Common sub-blocks use `.image-editor-tool-block` with `align-items: center`. Sliders use `enableSliderForBox()` from `site.js`.
+
+### SAM2 Warmup
+
+SAM2 tools preload the model through the internal `SAM2 Preload` generation parameter. The generated Comfy workflow connects `DownloadAndLoadSAM2Model` to `SwarmSam2ModelLoaderOutput`, so model loading runs without image encoding or segmentation. Keep the loader node ID stable between preload and segmentation workflows so Comfy can reuse its cached output.
 
 ## Instructions
 

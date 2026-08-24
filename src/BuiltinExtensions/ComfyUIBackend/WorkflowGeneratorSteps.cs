@@ -48,10 +48,12 @@ public class WorkflowGeneratorSteps
      * 100+: Dynamic
      * 1500+: LoRA Loaders (Stable-Dynamic)
      * 50,000+: Intermediate Image Saves (Stable-Dynamic)
+     * 60,000+: SAM2 Model Loading (Stable-Dynamic)
      */
 
     public static void Register()
     {
+        const int sam2StableNodeIdBase = 60000;
         #region Model Loader
         AddStep(g =>
         {
@@ -1290,6 +1292,16 @@ public class WorkflowGeneratorSteps
         #region SAM2 Masking
         AddStep(g =>
         {
+            if (g.UserInput.Get(ComfyUIBackendExtension.Sam2Preload, false))
+            {
+                string preloadModelNode = g.CreateNode("DownloadAndLoadSAM2Model", ComfyUIBackendExtension.Sam2ModelInputs(), id: g.GetStableDynamicID(sam2StableNodeIdBase, 0));
+                g.CreateNode("SwarmSam2ModelLoaderOutput", new JObject()
+                {
+                    ["sam2_model"] = NodePath(preloadModelNode, 0)
+                }, id: g.GetStableDynamicID(sam2StableNodeIdBase, 1));
+                g.SkipFurtherSteps = true;
+                return;
+            }
             if (!g.UserInput.TryGet(ComfyUIBackendExtension.Sam2PointCoordsPositive, out string coords) || string.IsNullOrWhiteSpace(coords) || coords == "[]")
             {
                 return;
@@ -1304,7 +1316,7 @@ public class WorkflowGeneratorSteps
             {
                 return;
             }
-            string modelNode = g.CreateNode("DownloadAndLoadSAM2Model", ComfyUIBackendExtension.Sam2ModelInputs());
+            string modelNode = g.CreateNode("DownloadAndLoadSAM2Model", ComfyUIBackendExtension.Sam2ModelInputs(), id: g.GetStableDynamicID(sam2StableNodeIdBase, 0));
             JObject segInputs = new()
             {
                 ["sam2_model"] = NodePath(modelNode, 0),
@@ -1321,7 +1333,7 @@ public class WorkflowGeneratorSteps
             {
                 ["mask"] = NodePath(segNode, 0),
                 ["fill_holes"] = true,
-                ["hole_kernel_size"] = 9
+                ["hole_kernel_size"] = 5
             });
             string maskNode = g.CreateNode("MaskToImage", new JObject()
             {
@@ -1341,7 +1353,7 @@ public class WorkflowGeneratorSteps
             {
                 return;
             }
-            string modelNode = g.CreateNode("DownloadAndLoadSAM2Model", ComfyUIBackendExtension.Sam2ModelInputs());
+            string modelNode = g.CreateNode("DownloadAndLoadSAM2Model", ComfyUIBackendExtension.Sam2ModelInputs(), id: g.GetStableDynamicID(sam2StableNodeIdBase, 0));
             string bboxNode = g.CreateNode("SwarmSam2BBoxFromJson", new JObject()
             {
                 ["bbox_json"] = bboxJson

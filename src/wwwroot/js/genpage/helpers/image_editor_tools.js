@@ -1400,12 +1400,9 @@ class ImageEditorToolSam2Base extends ImageEditorTool {
 
     setActive() {
         super.setActive();
-        if (!this.modelWarmed && !this.isWarmingUp && currentBackendFeatureSet.includes('sam2') && this.editor.getFinalImageData?.()) {
+        if (!this.modelWarmed && !this.isWarmingUp && currentBackendFeatureSet.includes('sam2')) {
             this.triggerWarmup();
         }
-    }
-
-    addWarmupGenData(genData, cx, cy) {
     }
 
     triggerWarmup() {
@@ -1414,21 +1411,17 @@ class ImageEditorToolSam2Base extends ImageEditorTool {
         this.editor.canvas.style.cursor = 'wait';
         this.configDiv.innerHTML = this.warmupHTML;
         try {
-            let img = this.editor.getFinalImageData();
             let genData = getGenInput();
-            genData['initimage'] = img;
             genData['images'] = 1;
             genData['prompt'] = '';
             delete genData['batchsize'];
             genData['donotsave'] = true;
-            let cx = Math.floor((this.editor.realWidth || 64) / 2);
-            let cy = Math.floor((this.editor.realHeight || 64) / 2);
-            this.addWarmupGenData(genData, cx, cy);
+            genData['sampreload'] = true;
             makeWSRequestT2I('GenerateText2ImageWS', genData, data => {
-                if (data.image || data.error) {
+                if (data.socket_intention == 'close') {
                     this.finishWarmup();
                 }
-            });
+            }, () => this.finishWarmup());
         }
         catch (e) {
             this.finishWarmup();
@@ -1644,10 +1637,6 @@ class ImageEditorToolSam2Points extends ImageEditorToolSam2Base {
         return true;
     }
 
-    addWarmupGenData(genData, cx, cy) {
-        genData['sampositivepoints'] = JSON.stringify([{ x: cx, y: cy }]);
-    }
-
     onMouseDown(e) {
         if (this.isWarmingUp || (e.button != 0 && e.button != 2)) {
             return;
@@ -1798,10 +1787,6 @@ class ImageEditorToolSam2BBox extends ImageEditorToolSam2Base {
             ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
             ctx.restore();
         }
-    }
-
-    addWarmupGenData(genData, cx, cy) {
-        genData['sambbox'] = JSON.stringify([cx - 1, cy - 1, cx + 1, cy + 1]);
     }
 
     onMouseDown(e) {

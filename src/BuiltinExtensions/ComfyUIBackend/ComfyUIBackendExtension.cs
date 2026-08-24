@@ -674,6 +674,8 @@ public class ComfyUIBackendExtension : Extension
 
     public static T2IRegisteredParam<string> Sam2PointCoordsPositive, Sam2PointCoordsNegative, Sam2BBox;
 
+    public static T2IRegisteredParam<bool> Sam2Preload;
+
     /// <summary>Creates the standard input set for a DownloadAndLoadSAM2Model node.</summary>
     public static JObject Sam2ModelInputs(string size = "base_plus", string segmentor = "single_image")
     {
@@ -697,6 +699,9 @@ public class ComfyUIBackendExtension : Extension
             ));
         Sam2BBox = T2IParamTypes.Register<string>(new("SAM2 BBox", "Internal: JSON bounding box [x1,y1,x2,y2] for SAM2 bbox masking.",
             "", IgnoreIf: "", FeatureFlag: "sam2", VisibleNormally: false, ExtraHidden: true, DoNotSave: true, DoNotPreview: true, AlwaysRetain: true, Toggleable: true
+            ));
+        Sam2Preload = T2IParamTypes.Register<bool>(new("SAM2 Preload", "Internal: Load the SAM2 model without running segmentation.",
+            "false", IgnoreIf: "false", FeatureFlag: "sam2", VisibleNormally: false, ExtraHidden: true, DoNotSave: true, DoNotPreview: true, AlwaysRetain: true, Toggleable: true
             ));
         UseIPAdapterForRevision = T2IParamTypes.Register<string>(new("Use IP-Adapter", $"Select an IP-Adapter model to use IP-Adapter for image-prompt input handling.\nModels will automatically be downloaded when you first use them.\nNote if you use a custom model, you must also set your CLIP-Vision Model under Advanced Model Addons, otherwise CLIP Vision G will be presumed.\n<a target=\"_blank\" href=\"{Utilities.RepoDocsRoot}/Features/ImagePrompting.md\">See more docs here.</a>",
             "None", IgnoreIf: "None", FeatureFlag: "ipadapter", GetValues: _ => IPAdapterModels, Group: T2IParamTypes.GroupImagePrompting, OrderPriority: 15, ChangeWeight: 1
